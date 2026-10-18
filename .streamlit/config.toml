@@ -1,0 +1,17 @@
+[server]
+address = "127.0.0.1"
+headless = true
+runOnSave = false
+
+[client]
+toolbarMode = "viewer"
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "dark"
+primaryColor = "#F59E0B"
+backgroundColor = "#0A0A0A"
+secondaryBackgroundColor = "#141414"
+textColor = "#F5F5F5"

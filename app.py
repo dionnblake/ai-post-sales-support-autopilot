@@ -1,5 +1,6 @@
 """A single-operator, localhost dashboard. Every ticket and send is simulated."""
 from datetime import datetime, timezone
+import os
 
 import streamlit as st
 
@@ -8,7 +9,7 @@ from support_autopilot.engine import WorkflowError
 from support_autopilot.knowledge import KnowledgeError
 from support_autopilot.presentation import deadline_label, format_utc
 from support_autopilot.providers import ProviderError
-from support_autopilot.seed import seed_demo
+from support_autopilot.seed import prepare_demo, seed_demo
 
 st.set_page_config(page_title="Support Autopilot", page_icon="↗", layout="wide")
 st.markdown("""<style>
@@ -36,8 +37,11 @@ def flash(message):
 
 
 now = datetime.now(timezone.utc)
+hosted = os.environ.get("SUPPORT_AUTO_SEED_DEMO") == "1"
 try:
     engine = make_engine()
+    if hosted:
+        prepare_demo(engine, now=now)
 except WorkflowError as error:
     st.error(str(error))
     st.stop()
@@ -71,6 +75,9 @@ st.markdown('<p class="eyebrow">POST-SALES / HUMAN REVIEW</p>', unsafe_allow_htm
 st.title("Support Autopilot")
 st.write("The repetitive work moves forward. You decide what goes out.")
 st.info("SYNTHETIC DEMO · Replies go to a local simulated outbox. No email, ClickUp connection, or autonomous sends.")
+if hosted:
+    st.caption("Shared public demo: the queue was processed for you, but every reply still waits for your approval. "
+               "Other visitors' decisions appear here too, and the data can be wiped when the host restarts the app.")
 if notice := st.session_state.pop("notice", None):
     # A toast stays visible even when the reviewer is scrolled down to the approval panel.
     st.toast(notice, icon="✅")

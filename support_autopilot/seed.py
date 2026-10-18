@@ -1,5 +1,6 @@
 """Original fictional tickets. Repeated seeding preserves existing timestamps and reviews."""
 from datetime import timedelta
+import threading
 
 SAMPLES = [
     ("Download invoice", "Where can I download our monthly invoice PDF?", 2),
@@ -31,3 +32,24 @@ def seed_demo(engine, *, now):
         engine.intake(external_id, subject, body, created_at=now-timedelta(hours=age))
         added += 1
     return added
+
+
+# One per server process: simultaneous first visitors must not seed the shared database twice.
+FIRST_LOAD_LOCK = threading.Lock()
+
+
+def prepare_demo(engine, *, now):
+    """Hosted first load: seed and process a demo-only queue. Never approves or sends anything."""
+    seed_ids = {f"SYN-{index}" for index in range(1001, 1001 + len(SAMPLES))}
+    with FIRST_LOAD_LOCK:
+        tickets = engine.tickets()
+        if any(ticket["external_id"] not in seed_ids for ticket in tickets):
+            return 0
+        added = seed_demo(engine, now=now)
+        # Finishes an interrupted first load; reviewed and processed tickets are left as they are.
+        pending = [ticket for ticket in engine.tickets() if not ticket["processed_at"]]
+        for ticket in pending:
+            engine.process(ticket["id"], now=now)
+        if pending:
+            engine.sweep_slas(now=now)
+        return added

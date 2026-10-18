@@ -20,7 +20,7 @@ Tickets come in. Each one gets triaged (category, urgency, sentiment), routed to
 - **SLA handling that keeps context.** Resolution deadlines come from triaged urgency (critical 1h, high 4h, normal 24h, low 48h). The SLA sweep escalates breached tickets and keeps their original skill queue so the specialist knows where it came from.
 - **Metrics that don't inflate.** Every number on the dashboard is computed from stored records, and the formulas are on screen. Because a human approves every reply, it reports *AI-assisted resolutions* instead of claiming deflection.
 - **A real LLM path, opt-in.** Free demo mode uses transparent rules and extractive drafts, so it runs with no API key. Live mode calls any OpenAI-compatible chat-completions endpoint with structured JSON output, using only the standard library.
-- **33 tests**, covering SQLite transactions, approval races, SLA boundaries, provider contract failures, and a full Streamlit click-through.
+- **42 tests**, covering SQLite transactions, approval races, SLA boundaries, provider contract failures, the hosted first-load path, and a full Streamlit click-through.
 
 ## See the workflow
 
@@ -59,7 +59,7 @@ python3 -m venv .venv
 .venv/bin/python -m streamlit run app.py --server.address 127.0.0.1 --server.port 8517
 ```
 
-Open `http://127.0.0.1:8517`. Demo mode needs no API key, model download, cloud database, or external runtime service. Streamlit usage statistics are disabled.
+Open `http://127.0.0.1:8517`. Demo mode needs no API key, model download, cloud database, or external runtime service. Streamlit usage statistics are disabled for local runs.
 
 ### A two-minute walkthrough
 
@@ -71,6 +71,10 @@ Open `http://127.0.0.1:8517`. Demo mode needs no API key, model download, cloud 
 6. Inspect the unsupported request and security cases: they have no approvable reply. Inspect the older tickets: the SLA sweep escalates them without sending anything.
 
 All generated runtime data stays in the project's ignored `data/` folder. Tests use unique project-local databases under `work/test-runs/`; they do not reset the demo database. To run a second independent demo, set `SUPPORT_DATA_DIR` to another directory **inside this project**.
+
+### Hosted demo entrypoint
+
+`streamlit_app.py` is the entrypoint for Streamlit Community Cloud. It runs the same dashboard, but when the database is empty it loads and processes the demo tickets, so a visitor lands on a populated queue. It never approves anything: every reply still waits for a reviewer to confirm and approve it. The hosted copy is shared by all visitors and keeps its SQLite file on the host's temporary disk, so the data can be wiped when Community Cloud restarts or redeploys the app. Live LLM mode stays off there: no provider settings are configured, so it cannot call a model. Community Cloud enforces its own usage-statistics setting.
 
 ## What is real, and what is simulated
 
@@ -126,7 +130,7 @@ Every reply requires human review, so this project does not claim autonomous res
 - Rejected reply: invalidate its approval path and escalate; do not send.
 - Database version mismatch: stop; no automatic migration of an existing database.
 
-The reviewer label is not authentication. This is a single-operator localhost app, not a tenant-isolated production service. The processing transaction can hold the local database lock during bounded API calls; a production worker queue would separate that boundary.
+The reviewer label is not authentication. This is a single-operator demo (the hosted copy is one shared sandbox), not a tenant-isolated production service. The processing transaction can hold the local database lock during bounded API calls; a production worker queue would separate that boundary.
 
 ## Test and inspect
 
@@ -154,6 +158,7 @@ This is integration design only; no ClickUp connection is implemented.
 
 ```text
 app.py                    Streamlit review dashboard
+streamlit_app.py          Hosted-demo entrypoint (seeds an empty queue)
 support_autopilot/        Retrieval, providers, workflow, seed data, CLI
 kb/                       Original fictional support policies
 tests/                    Workflow, API-contract, and UI tests

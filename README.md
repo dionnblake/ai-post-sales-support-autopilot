@@ -1,5 +1,7 @@
 # AI Post-Sales Support Autopilot
 
+[![tests](https://github.com/dionnblake/ai-post-sales-support-autopilot/actions/workflows/tests.yml/badge.svg)](https://github.com/dionnblake/ai-post-sales-support-autopilot/actions/workflows/tests.yml)
+
 An LLM-assisted support pipeline that does the repetitive part of a support queue and leaves the send decision to a person.
 
 Tickets come in. Each one gets triaged (category, urgency, sentiment), routed to the right queue, and given a resolution SLA. The pipeline pulls the relevant sections from a Markdown knowledge base, drafts a reply that cites them, and holds it for review. A reviewer reads the draft next to its sources and either approves it or escalates it. Anything that ages past its SLA gets escalated automatically.

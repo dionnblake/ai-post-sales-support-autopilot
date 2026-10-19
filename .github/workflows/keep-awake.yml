@@ -1,0 +1,46 @@
+name: Keep live demo awake
+# Streamlit Community Cloud sleeps apps after a stretch without visitors.
+# This opens the demo in a headless browser like a visitor would, and wakes it if it is asleep.
+# Disable it any time from the Actions tab.
+on:
+  schedule:
+    - cron: '17 */8 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  visit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install playwright==1.48.0 && python -m playwright install --with-deps chromium
+      - name: Open the demo
+        env:
+          DEMO_URL: https://support-autopilot-demo.streamlit.app/
+        run: |
+          python - <<'EOF'
+          import os, re
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as p:
+              page = p.chromium.launch().new_page()
+              page.goto(os.environ["DEMO_URL"], wait_until="domcontentloaded", timeout=120_000)
+              page.wait_for_timeout(15_000)
+              wake = page.get_by_role("button", name=re.compile("get this app back up", re.I))
+              if wake.count():
+                  print("App was asleep; waking it.")
+                  wake.first.click()
+                  page.wait_for_timeout(90_000)
+              else:
+                  print("App was awake.")
+              # The dashboard renders inside Streamlit's app frame.
+              def shows_dashboard(frame):
+                  try:
+                      return "Support Autopilot" in frame.content()
+                  except Exception:
+                      return False
+              rendered = any(shows_dashboard(frame) for frame in page.frames)
+              print("Dashboard rendered." if rendered else "Dashboard text not found yet; the visit still counts.")
+          EOF

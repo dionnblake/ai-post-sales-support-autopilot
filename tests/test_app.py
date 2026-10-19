@@ -42,3 +42,20 @@ def test_empty_app_displays_truthful_zero_metrics(tmp_path, monkeypatch):
     at = AppTest.from_file(ROOT / "app.py", default_timeout=15).run()
     assert not at.exception
     assert [metric.value for metric in at.metric] == ["0", "0%", "0", "0 min"]
+
+
+def test_approval_shows_the_simulated_email_that_was_recorded(tmp_path, monkeypatch):
+    monkeypatch.setenv("SUPPORT_DATA_DIR", str(tmp_path / "outbox"))
+    at = AppTest.from_file(ROOT / "app.py", default_timeout=15).run()
+    at.button(key="seed").click().run()
+    at.button(key="process").click().run()
+    draft = at.text[0].value
+    assert not any("Subject: Re:" in block.value for block in at.text)
+    at.checkbox(key="review_confirm").check().run()
+    at.button(key="approve").click().run()
+    assert not at.exception
+    email = next(block.value for block in at.text if "Subject: Re: Download invoice" in block.value)
+    assert "To: Customer on SYN-1001" in email
+    assert "Approved by: Demo reviewer" in email
+    assert draft in email
+    assert any("not delivered" in caption.value for caption in at.caption)

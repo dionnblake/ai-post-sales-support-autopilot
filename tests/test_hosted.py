@@ -5,11 +5,13 @@ from pathlib import Path
 import threading
 import tomllib
 
+import pytest
 from streamlit.testing.v1 import AppTest
 
 from conftest import NOW
 from support_autopilot import seed
 from support_autopilot.config import make_engine
+from support_autopilot.engine import WorkflowError
 from support_autopilot.seed import SAMPLES, prepare_demo
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -110,7 +112,10 @@ def test_hosted_page_opens_with_a_short_guide_whose_claims_hold(tmp_path, monkey
     # ...and real tickets, which behave the way it says.
     for external_id in GUIDE_REVIEWABLE + GUIDE_REFUSED:
         assert external_id in text
-    tickets = {ticket["external_id"]: ticket for ticket in make_engine().tickets()}
+    # Each visitor has a private queue, so the guide must not hedge about other visitors.
+    assert "visitor" not in text
+    tickets = {ticket["external_id"]: ticket
+               for ticket in make_engine(sandbox=at.session_state["demo_sandbox"]).tickets()}
     assert at.selectbox(key="ticket_id").value == tickets["SYN-1001"]["id"]
     assert all(tickets[external_id]["status"] == "NEEDS_REVIEW" for external_id in GUIDE_REVIEWABLE)
     refusals = {"SYN-1006": ("Security", "Security"), "SYN-1007": ("Specialist", "knowledge-base evidence"),
@@ -137,7 +142,8 @@ def test_hosted_sidebar_does_not_claim_a_local_single_operator_app(tmp_path, mon
     assert "local" not in text.lower()
     assert "single-operator" not in text
     assert "not authenticated identity" in text
-    assert "shared public demo" in text.lower()
+    assert "private to this browser tab" in text
+    assert "same queue" not in text
 
 
 def test_local_sidebar_keeps_its_local_wording(tmp_path, monkeypatch):
@@ -147,6 +153,33 @@ def test_local_sidebar_keeps_its_local_wording(tmp_path, monkeypatch):
     text = sidebar_text(at)
     assert "LOCAL WORKFLOW LAB" in text
     assert "Local, single-operator demo." in text
+
+
+def hosted_visitor():
+    return AppTest.from_file(ROOT / "streamlit_app.py", default_timeout=20).run()
+
+
+def test_each_hosted_visitor_gets_a_private_fresh_queue(tmp_path, monkeypatch):
+    monkeypatch.setenv("SUPPORT_DATA_DIR", str(tmp_path / "public"))
+    monkeypatch.setenv("SUPPORT_AUTO_SEED_DEMO", "0")
+    first = hosted_visitor()
+    first.checkbox(key="review_confirm").check().run()
+    first.button(key="approve").click().run()
+    assert first.metric[0].value == "1"
+    second = hosted_visitor()
+    assert not second.exception
+    assert second.metric[0].value == "0"
+    assert len(second.dataframe[0].value) == len(SAMPLES)
+    assert first.run().metric[0].value == "1"
+    assert all(not any(c.value.startswith("Shared public demo") or "Other visitors" in c.value for c in at.caption)
+               for at in (first, second))
+    assert any("Refresh the page to start over" in c.value for c in second.caption)
+
+
+@pytest.mark.parametrize("sandbox", ["../escape", "", "ABC", "a" * 31, "g" * 32])
+def test_sandbox_names_cannot_leave_the_data_directory(sandbox):
+    with pytest.raises(WorkflowError):
+        make_engine(sandbox=sandbox)
 
 
 def test_local_app_does_not_auto_seed(tmp_path, monkeypatch):

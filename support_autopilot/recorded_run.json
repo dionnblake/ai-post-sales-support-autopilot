@@ -1,0 +1,157 @@
+{
+  "entries": {
+    "4de4f216af059d561ea3d4440310149545c9af0c5ba263b00c1a8117efd6e54c": {
+      "draft": {
+        "evidence": "80cd00b0bf12663a3ced838578904c07849128bc82e613c06c14a8c1f4ebcb77",
+        "result": {
+          "body": "You can request a new link from the sign-in page by selecting \"Forgot password\" [access-1]. Once received, be sure to open only the newest email [access-1].",
+          "citations": [
+            "access-1"
+          ]
+        }
+      },
+      "triage": {
+        "category": "access",
+        "sentiment": "neutral",
+        "urgency": "normal"
+      }
+    },
+    "5c89bfe157651b8955ee5e9b45422d2a408f226b93d8b2336126e4c1a90ce91f": {
+      "triage": {
+        "category": "other",
+        "sentiment": "neutral",
+        "urgency": "low"
+      }
+    },
+    "6f4f69f37f80f20426550feb2194a7de2c2b81621b1f9af7093207a21ab1b761": {
+      "draft": {
+        "evidence": "e4ec6bd8be13e29e22c7e71016b32262ad42162c08861136e7f401d9da495195",
+        "result": {
+          "body": "To resolve this issue, please have a workspace admin open Settings > Integrations > Slack and select Reconnect [integrations-1]. Next, confirm the destination channel and send a test notification [integrations-1]. If the test fails, please share the error message so it can be routed to Technical Support [integrations-1].",
+          "citations": [
+            "integrations-1"
+          ]
+        }
+      },
+      "triage": {
+        "category": "technical",
+        "sentiment": "negative",
+        "urgency": "high"
+      }
+    },
+    "6fa94a0e3d030c0020857aca9a36c4e13e9e437e1399bf029ee05cbd8b77f76e": {
+      "draft": {
+        "evidence": "fbb82d4667ac3b9019fb7b4ccfe5d3aa3f8a97deb053f79182d3b3fd93e4e986",
+        "result": {
+          "body": "If an invitation has expired, a workspace admin can resend it directly from the People screen [access-2].",
+          "citations": [
+            "access-2"
+          ]
+        }
+      },
+      "triage": {
+        "category": "how_to",
+        "sentiment": "neutral",
+        "urgency": "normal"
+      }
+    },
+    "7a4fe98863a54a475121431198f37cdaa1c2e3a786acbd2df55d6238c9e899cf": {
+      "draft": {
+        "evidence": "b6246b04e7c8dc2bb87bfdd9a162961c6ee6b7dbdc3fb81380d822cadbe60454",
+        "result": {
+          "body": "To check your profile time zone, go to Profile > Preferences > Time zone [onboarding-2].",
+          "citations": [
+            "onboarding-2"
+          ]
+        }
+      },
+      "triage": {
+        "category": "how_to",
+        "sentiment": "neutral",
+        "urgency": "low"
+      }
+    },
+    "96df44aa4610ccc041b159a20a6ade755a0a2dd4cd914e9434786366999c9b63": {
+      "draft": {
+        "evidence": "780510f214f1b9d86b3b7723caf4c778d938bde4dbc5d9f943ee74709b4bc6f9",
+        "result": {
+          "body": "To assist with a duplicate charge or refund request, please provide the invoice ID and charge date so it can be sent to the Billing queue, where a billing specialist will review eligibility [billing-2].",
+          "citations": [
+            "billing-2"
+          ]
+        }
+      },
+      "triage": {
+        "category": "billing",
+        "sentiment": "negative",
+        "urgency": "normal"
+      }
+    },
+    "a35e6ab96c2c671261543fefc9a1f5aeea78562786213d3918d2f84834b46159": {
+      "draft": {
+        "evidence": "3539c18626c4211e2fcde84e75f9d53729eb741b2862a3763d454072944193e5",
+        "result": {
+          "body": "If your export has failed twice, please send the project ID and approximate task count to Technical Support [integrations-2]. Do not attach confidential task contents [integrations-2].",
+          "citations": [
+            "integrations-2"
+          ]
+        }
+      },
+      "triage": {
+        "category": "technical",
+        "sentiment": "neutral",
+        "urgency": "normal"
+      }
+    },
+    "d14ef827d03e286f7bacf2e33018075002aa4019b2cbecafa5a4ffd30a46f68f": {
+      "draft": {
+        "evidence": "0ed43cd848de959bd5c3f2b10bfcfec957b9c1cc8a78dc36be3f18faedebb4f5",
+        "result": {
+          "body": "To save a project template, create a project, add your standard task list, and select \"Save as template\" from the project menu [onboarding-1]. As a workspace admin, you can then make the template available to the entire workspace [onboarding-1].",
+          "citations": [
+            "onboarding-1"
+          ]
+        }
+      },
+      "triage": {
+        "category": "how_to",
+        "sentiment": "positive",
+        "urgency": "low"
+      }
+    },
+    "d57368a419914c99535cefb20a2b32ed92f12c2173beb5e24e39b886d071feb8": {
+      "draft": {
+        "evidence": "659d44a83c6427270aadb9be3c0c6d0b719d935d6c94fbab8bffd6d2a458b643",
+        "result": {
+          "body": "For a service outage affecting multiple users, please collect the affected workspace ID, the approximate start time, and any visible errors [incidents-1]. Once gathered, this should be routed to Technical Support with critical urgency [incidents-1].",
+          "citations": [
+            "incidents-1"
+          ]
+        }
+      },
+      "triage": {
+        "category": "technical",
+        "sentiment": "negative",
+        "urgency": "critical"
+      }
+    },
+    "d5a8b11fe412187aeb2e3c0f6767a28f503cb4956a3dd8c11d43a2d3a9ba8ea8": {
+      "draft": {
+        "evidence": "b2b69714dc2f51ee9f4691e02f7af544942822b93663d2594276c28cdb48eb31",
+        "result": {
+          "body": "Workspace owners can download monthly invoice PDFs by going to Settings > Billing > Invoices, selecting the relevant billing month, and choosing Download PDF [billing-1]. If you do not have the owner role, you will need to ask your workspace owner to download the invoice for you [billing-1].",
+          "citations": [
+            "billing-1"
+          ]
+        }
+      },
+      "triage": {
+        "category": "billing",
+        "sentiment": "neutral",
+        "urgency": "low"
+      }
+    }
+  },
+  "model": "gemini-3.8-flash",
+  "recorded_at": "2026-10-19"
+}

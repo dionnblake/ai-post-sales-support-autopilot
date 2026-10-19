@@ -1,13 +1,14 @@
 """A single-operator, localhost dashboard. Every ticket and send is simulated."""
 from datetime import datetime, timezone
 import os
+import uuid
 
 import streamlit as st
 
 from support_autopilot.config import make_engine
 from support_autopilot.engine import WorkflowError
 from support_autopilot.knowledge import KnowledgeError
-from support_autopilot.presentation import deadline_label, format_utc
+from support_autopilot.presentation import deadline_label, format_utc, mode_label
 from support_autopilot.providers import ProviderError
 from support_autopilot.seed import prepare_demo, seed_demo
 
@@ -38,8 +39,10 @@ def flash(message):
 
 now = datetime.now(timezone.utc)
 hosted = os.environ.get("SUPPORT_AUTO_SEED_DEMO") == "1"
+# A hosted visitor gets a private queue for this browser tab; a refresh starts a fresh one.
+sandbox = st.session_state.setdefault("demo_sandbox", uuid.uuid4().hex) if hosted else None
 try:
-    engine = make_engine()
+    engine = make_engine(sandbox=sandbox, recorded=hosted)
     if hosted:
         prepare_demo(engine, now=now)
 except WorkflowError as error:
@@ -65,7 +68,7 @@ with st.sidebar:
     st.divider()
     reviewer = st.text_input("Reviewer label", value="Demo reviewer", max_chars=80)
     st.caption("This is an audit label, not authenticated identity. " +
-               ("Shared public demo: every visitor reviews the same queue." if hosted
+               ("Public demo: your queue is private to this browser tab." if hosted
                 else "Local, single-operator demo."))
     allow_live = False
     if mode == "Live LLM":
@@ -89,10 +92,9 @@ if hosted:
             "3. Open a ticket the AI refused to answer: **SYN-1012** (someone tries to hijack the AI), "
             "**SYN-1006** (a security report), or **SYN-1007** (a question no help article covers). "
             "The yellow box says why it went to a person instead.\n\n"
-            "If an earlier visitor already approved SYN-1001, try **SYN-1002**, **SYN-1005**, **SYN-1009**, "
-            "or **SYN-1010**.")
-    st.caption("Shared public demo: the queue was processed for you, but every reply still waits for your approval. "
-               "Other visitors' decisions appear here too, and the data can be wiped when the host restarts the app.")
+            "More drafts are waiting on **SYN-1002**, **SYN-1005**, **SYN-1009**, and **SYN-1010**.")
+    st.caption("Your own copy of the demo: the queue was processed for you, but every reply still waits for your "
+               "approval. Refresh the page to start over with a fresh queue.")
 if notice := st.session_state.pop("notice", None):
     # A toast stays visible even when the reviewer is scrolled down to the approval panel.
     st.toast(notice, icon="✅")
@@ -155,7 +157,7 @@ with left:
         if st.button("Process this ticket with live LLM", disabled=not allow_live, key="live_process"):
             try:
                 with st.spinner("Calling the configured model..."):
-                    live_engine = make_engine(live=True)
+                    live_engine = make_engine(live=True, sandbox=sandbox)
                     live_engine.process(selected, now=now)
                     live_engine.sweep_slas(now=now)
                 flash("Live request completed. Inspect the stored outcome and sources.")
@@ -167,7 +169,7 @@ with right:
     st.subheader("Review the reply")
     draft = ticket["draft"]
     if draft:
-        st.caption(f"Generated in {ticket['mode']} mode. Citations are checked; semantic correctness needs your review.")
+        st.caption(f"{mode_label(ticket['mode'])} Citations are checked; semantic correctness needs your review.")
         st.text(draft["body"])
         for excerpt in draft["evidence"]:
             with st.expander(f"[{excerpt['id']}] {excerpt['source']} / {excerpt['title']}"):
@@ -193,6 +195,12 @@ with right:
                     st.error(str(error))
         else:
             st.success("Human approved. Simulated reply recorded; no external delivery occurred.")
+            if sent := next((record for record in engine.outbox() if record["ticket_id"] == selected), None):
+                with st.container(border=True):
+                    st.markdown('<p class="eyebrow">SIMULATED EMAIL</p>', unsafe_allow_html=True)
+                    st.text(f"To: Customer on {ticket['external_id']}\nSubject: Re: {ticket['subject']}\n"
+                            f"Approved by: {sent['reviewer']} · {format_utc(sent['at'])}\n\n{sent['body']}")
+                    st.caption("Recorded in the local simulated outbox and not delivered to anyone.")
     else:
         st.info("No reply is available. Process a new ticket, or let a specialist handle an escalated case.")
 

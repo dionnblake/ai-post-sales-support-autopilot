@@ -3,7 +3,9 @@
 [![tests](https://github.com/dionnblake/ai-post-sales-support-autopilot/actions/workflows/tests.yml/badge.svg)](https://github.com/dionnblake/ai-post-sales-support-autopilot/actions/workflows/tests.yml)
 [![Live demo](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://support-autopilot-demo.streamlit.app/)
 
-**[Try the live demo](https://support-autopilot-demo.streamlit.app/)**: no install or sign-up. It opens on a processed queue with a 60-second guide. If it says the app is asleep, click the wake-up button and give it about a minute.
+**[Try the live demo](https://support-autopilot-demo.streamlit.app/)**: no install or sign-up. You get your own fresh queue, drafted by a real model (Gemini), with a 60-second guide. If it says the app is asleep, click the wake-up button and give it about a minute.
+
+[![Walkthrough: the triaged queue, a cited Gemini draft, human approval, the simulated email, and a refused prompt-injection ticket](docs/demo.gif)](https://support-autopilot-demo.streamlit.app/)
 
 An LLM-assisted support pipeline that does the repetitive part of a support queue and leaves the send decision to a person.
 
@@ -13,7 +15,7 @@ Tickets come in. Each one gets triaged (category, urgency, sentiment), routed to
 
 ![Review panel: the draft reply next to its cited knowledge-base source, with approval locked until the reviewer confirms](docs/review-panel.png)
 
-> Portfolio project. It runs on synthetic tickets, locally or in the shared [live demo](https://support-autopilot-demo.streamlit.app/), and replies go to a simulated outbox. Nothing is sent to a real customer.
+> Portfolio project. It runs on synthetic tickets, locally or in the [live demo](https://support-autopilot-demo.streamlit.app/), and replies go to a simulated outbox. Nothing is sent to a real customer.
 
 ## What's worth looking at
 
@@ -23,7 +25,7 @@ Tickets come in. Each one gets triaged (category, urgency, sentiment), routed to
 - **SLA handling that keeps context.** Resolution deadlines come from triaged urgency (critical 1h, high 4h, normal 24h, low 48h). The SLA sweep escalates breached tickets and keeps their original skill queue so the specialist knows where it came from.
 - **Metrics that don't inflate.** Every number on the dashboard is computed from stored records, and the formulas are on screen. Because a human approves every reply, it reports *AI-assisted resolutions* instead of claiming deflection.
 - **A real LLM path, opt-in.** Free demo mode uses transparent rules and extractive drafts, so it runs with no API key. Live mode calls any OpenAI-compatible chat-completions endpoint with structured JSON output, using only the standard library.
-- **45 tests**, covering SQLite transactions, approval races, SLA boundaries, provider contract failures, the hosted first-load path, and a full Streamlit click-through.
+- **65 tests**, covering SQLite transactions, approval races, SLA boundaries, provider contract failures, exact replay of the recorded model run, private hosted queues, and a full Streamlit click-through.
 
 ## See the workflow
 
@@ -77,7 +79,13 @@ All generated runtime data stays in the project's ignored `data/` folder. Tests 
 
 ### Hosted demo entrypoint
 
-`streamlit_app.py` is the entrypoint for Streamlit Community Cloud. It runs the same dashboard, but when the database is empty it loads and processes the demo tickets, so a visitor lands on a populated queue with a short "Try it in 60 seconds" guide. It never approves anything: every reply still waits for a reviewer to confirm and approve it. The hosted copy is shared by all visitors and keeps its SQLite file on the host's temporary disk, so the data can be wiped when Community Cloud restarts or redeploys the app. Live LLM mode stays off there: no provider settings are configured, so it cannot call a model. Community Cloud enforces its own usage-statistics setting.
+`streamlit_app.py` is the entrypoint for Streamlit Community Cloud. It runs the same dashboard with three differences:
+
+- **Each visitor gets a private queue.** A browser tab gets its own SQLite file under `data/sessions/`, seeded and processed on first load. Refreshing starts a fresh queue. The files live on the host's temporary disk and can be wiped when Community Cloud restarts or redeploys the app.
+- **Drafts come from a recorded real-model run.** `support_autopilot/recorded_run.json` holds one run of `gemini-3.8-flash` over the 12 demo tickets. The hosted app replays it exactly, with no key, network call, or charge. A ticket missing from the recording, or a draft made from knowledge-base text that has since changed, fails safely as an ERROR instead of falling back to the keyword rules. Each draft is labeled with the model and recording date.
+- **A short "Try it in 60 seconds" guide** sits at the top, and approving a reply shows the simulated email that was recorded.
+
+It never approves anything: every reply still waits for a reviewer to confirm and approve it. Live LLM mode stays off there: no provider settings are configured, so it cannot call a model. Community Cloud enforces its own usage-statistics setting. A scheduled GitHub Action (`keep-awake.yml`) opens the demo every 8 hours so it is less likely to be asleep when someone visits.
 
 ## What is real, and what is simulated
 
@@ -86,6 +94,7 @@ All generated runtime data stays in the project's ignored `data/` folder. Tests 
 | Intake | Original deterministic seed data; no live ticket integration |
 | Demo triage | Transparent keyword rules; no claim that this mode uses a model |
 | Live triage/drafting | Optional JSON chat-completions API adapter; explicit enablement and key |
+| Recorded triage/drafting | One saved `gemini-3.8-flash` run, replayed exactly in the hosted demo; labeled with model and date |
 | RAG | Actual local lexical retrieval over Markdown sections; no vector DB or embeddings |
 | Demo drafting | Extractive reply from a retrieved section, with a checked source ID |
 | Human review | Explicit approval bound to the exact draft and KB snapshot |
@@ -93,7 +102,7 @@ All generated runtime data stays in the project's ignored `data/` folder. Tests 
 | SLA | Elapsed UTC resolution deadlines; button/CLI sweep, not a background scheduler |
 | Metrics | Calculated from persisted records; all examples are synthetic |
 
-The demo cannot establish live model answer quality, actual customer outcomes, or production readiness. Citation validation proves that the referenced excerpt was retrieved; **it does not prove semantic correctness**. That remains part of human review.
+One recorded run over 12 fictional tickets shows real model output; it does not establish answer quality at scale, actual customer outcomes, or production readiness. Citation validation proves that the referenced excerpt was retrieved; **it does not prove semantic correctness**. That remains part of human review.
 
 ## Optional live LLM mode
 
@@ -109,6 +118,8 @@ $env:SUPPORT_LLM_BASE_URL = "https://api.openai.com/v1"
 ```
 
 Choose **Live LLM**, explicitly allow the request, then process a selected unprocessed ticket. The configured model must support `response_format: json_object` and `max_tokens`. The adapter makes at most two requests for a ticket, has a 20-second timeout per request, limits response size, and refuses redirects. A failed or invalid response leaves an ERROR outcome for inspection, never an automatic paid retry or a silent switch to demo mode. Already processed demo drafts remain labeled demo; use a separate local data directory to try the same seeds with a real provider.
+
+To refresh the hosted demo's recording after changing the knowledge base, set the same variables and run `python -m support_autopilot record`. It processes the 12 demo tickets once (provider charges may apply) and rewrites `support_autopilot/recorded_run.json`.
 
 Provider charges may apply. Live mode transmits ticket content and retrieved excerpts to the configured endpoint. Use only the fictional demo content and a provider you trust. No live model calls were needed for the ordinary test suite.
 
@@ -133,7 +144,7 @@ Every reply requires human review, so this project does not claim autonomous res
 - Rejected reply: invalidate its approval path and escalate; do not send.
 - Database version mismatch: stop; no automatic migration of an existing database.
 
-The reviewer label is not authentication. This is a single-operator demo (the hosted copy is one shared sandbox), not a tenant-isolated production service. The processing transaction can hold the local database lock during bounded API calls; a production worker queue would separate that boundary.
+The reviewer label is not authentication. This is a single-operator demo (hosted visitors each get a throwaway sandbox), not a tenant-isolated production service. The processing transaction can hold the local database lock during bounded API calls; a production worker queue would separate that boundary.
 
 ## Test and inspect
 
@@ -161,14 +172,15 @@ This is integration design only; no ClickUp connection is implemented.
 
 ```text
 app.py                    Streamlit review dashboard
-streamlit_app.py          Hosted-demo entrypoint (seeds an empty queue)
-support_autopilot/        Retrieval, providers, workflow, seed data, CLI
+streamlit_app.py          Hosted-demo entrypoint (private queue per visitor, recorded model run)
+support_autopilot/        Retrieval, providers, workflow, seed data, CLI, recorded model run
 kb/                       Original fictional support policies
 tests/                    Workflow, API-contract, and UI tests
 run.ps1                   Windows local launcher
 data/                     Ignored demo SQLite database
 work/                     Ignored local test/temp material
-docs/                     README screenshots
+docs/                     README screenshots and walkthrough GIF
+.github/workflows/        Tests on every push; keep-awake visit every 8 hours
 ```
 
 I scoped the workflow and its approval boundary, chose the failure cases and metrics, and directed AI-assisted implementation and verification. This repository is a bounded demonstration of that work, not evidence of a deployed customer support service.

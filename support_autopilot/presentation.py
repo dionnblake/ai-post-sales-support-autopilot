@@ -22,3 +22,15 @@ def deadline_label(due_at, now, status):
         return "—"
     due = datetime.fromisoformat(due_at)
     return f"Overdue {_span(now - due)}" if due <= now else f"Due in {_span(due - now)}"
+
+
+def mode_label(mode):
+    """Who drafted a reply, in words a reviewer can check."""
+    if mode == "demo":
+        return "Drafted by the free demo's keyword rules, not a model."
+    if mode == "live":
+        return "Drafted live by the configured model."
+    if isinstance(mode, str) and mode.startswith("recorded:"):
+        _, model, recorded_at = (mode.split(":", 2) + ["", ""])[:3]
+        return f"Drafted by {model} in a recorded run on {recorded_at}, replayed here without a live call."
+    return f"Drafted in {mode} mode."

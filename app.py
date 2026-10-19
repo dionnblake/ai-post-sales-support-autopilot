@@ -47,7 +47,7 @@ except WorkflowError as error:
     st.stop()
 
 with st.sidebar:
-    st.markdown('<p class="eyebrow">LOCAL WORKFLOW LAB</p>', unsafe_allow_html=True)
+    st.markdown(f'<p class="eyebrow">{"PUBLIC" if hosted else "LOCAL"} WORKFLOW LAB</p>', unsafe_allow_html=True)
     st.header("Run the demo")
     st.caption("Fictional TaskHarbor SaaS support. No customer data or external sender.")
     mode = st.radio("Processing mode", ["Free demo", "Live LLM"], key="mode")
@@ -64,7 +64,9 @@ with st.sidebar:
         flash(f"Flagged {engine.sweep_slas(now=now)} newly breached resolution SLAs.")
     st.divider()
     reviewer = st.text_input("Reviewer label", value="Demo reviewer", max_chars=80)
-    st.caption("This is an audit label, not authenticated identity. Local, single-operator demo.")
+    st.caption("This is an audit label, not authenticated identity. " +
+               ("Shared public demo: every visitor reviews the same queue." if hosted
+                else "Local, single-operator demo."))
     allow_live = False
     if mode == "Live LLM":
         st.warning("Live mode sends fictional ticket text and KB excerpts to your configured provider.")

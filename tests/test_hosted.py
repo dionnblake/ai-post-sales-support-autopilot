@@ -124,6 +124,31 @@ def test_hosted_page_opens_with_a_short_guide_whose_claims_hold(tmp_path, monkey
         assert any(reason in warning.value for warning in at.warning)
 
 
+def sidebar_text(at):
+    return " ".join(element.value for element in [*at.sidebar.markdown, *at.sidebar.caption])
+
+
+def test_hosted_sidebar_does_not_claim_a_local_single_operator_app(tmp_path, monkeypatch):
+    monkeypatch.setenv("SUPPORT_DATA_DIR", str(tmp_path / "sidebar"))
+    monkeypatch.setenv("SUPPORT_AUTO_SEED_DEMO", "0")
+    at = AppTest.from_file(ROOT / "streamlit_app.py", default_timeout=20).run()
+    assert not at.exception
+    text = sidebar_text(at)
+    assert "local" not in text.lower()
+    assert "single-operator" not in text
+    assert "not authenticated identity" in text
+    assert "shared public demo" in text.lower()
+
+
+def test_local_sidebar_keeps_its_local_wording(tmp_path, monkeypatch):
+    monkeypatch.setenv("SUPPORT_DATA_DIR", str(tmp_path / "local-sidebar"))
+    monkeypatch.delenv("SUPPORT_AUTO_SEED_DEMO", raising=False)
+    at = AppTest.from_file(ROOT / "app.py", default_timeout=15).run()
+    text = sidebar_text(at)
+    assert "LOCAL WORKFLOW LAB" in text
+    assert "Local, single-operator demo." in text
+
+
 def test_local_app_does_not_auto_seed(tmp_path, monkeypatch):
     monkeypatch.setenv("SUPPORT_DATA_DIR", str(tmp_path / "local"))
     monkeypatch.delenv("SUPPORT_AUTO_SEED_DEMO", raising=False)

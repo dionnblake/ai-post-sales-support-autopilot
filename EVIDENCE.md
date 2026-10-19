@@ -33,5 +33,5 @@ A separate code review found two issues, both fixed with regression tests: malfo
 
 - Live LLM calls or real answer quality.
 - ClickUp integration or real delivery.
-- The Streamlit Community Cloud deployment itself; only the hosted entrypoint was exercised locally.
+- Approval on the live Community Cloud app. It was opened after deployment (12 processed tickets, 0 resolutions, guide visible), but nothing was approved there, to keep the shared demo clean; approval was exercised locally.
 - Authenticated reviewers, multiple tenants, business-hours SLAs, or production reliability.

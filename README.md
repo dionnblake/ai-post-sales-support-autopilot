@@ -1,6 +1,9 @@
 # AI Post-Sales Support Autopilot
 
 [![tests](https://github.com/dionnblake/ai-post-sales-support-autopilot/actions/workflows/tests.yml/badge.svg)](https://github.com/dionnblake/ai-post-sales-support-autopilot/actions/workflows/tests.yml)
+[![Live demo](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://support-autopilot-demo.streamlit.app/)
+
+**[Try the live demo](https://support-autopilot-demo.streamlit.app/)**: no install or sign-up. It opens on a processed queue with a 60-second guide. If it says the app is asleep, click the wake-up button and give it about a minute.
 
 An LLM-assisted support pipeline that does the repetitive part of a support queue and leaves the send decision to a person.
 
@@ -10,7 +13,7 @@ Tickets come in. Each one gets triaged (category, urgency, sentiment), routed to
 
 ![Review panel: the draft reply next to its cited knowledge-base source, with approval locked until the reviewer confirms](docs/review-panel.png)
 
-> Portfolio project. It runs on localhost with synthetic tickets, and replies go to a simulated outbox. Nothing is sent to a real customer.
+> Portfolio project. It runs on synthetic tickets, locally or in the shared [live demo](https://support-autopilot-demo.streamlit.app/), and replies go to a simulated outbox. Nothing is sent to a real customer.
 
 ## What's worth looking at
 

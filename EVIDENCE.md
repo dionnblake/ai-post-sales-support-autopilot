@@ -2,7 +2,7 @@
 
 This covers a local portfolio demo, not a production certification.
 
-**Test suite:** 42 passed on Python 3.13 / Streamlit 1.66.0, with no API key and no network calls.
+**Test suite:** 43 passed on Python 3.13 / Streamlit 1.66.0, with no API key and no network calls.
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
@@ -16,7 +16,7 @@ This covers a local portfolio demo, not a production certification.
 - **Safety routing:** security reports and prompt-injection text go to the Security queue without a draft.
 - **SLA:** deadline boundaries are inclusive (a ticket due exactly now counts as breached), unprocessed tickets get a default deadline, and a drafting failure keeps the urgency-based deadline.
 - **LLM adapter contract:** a fake transport checks the JSON request shape and that malformed envelopes, invalid classifications, truncated responses, and bad citations all fail safely. These are contract tests, not a live-provider test.
-- **Hosted first load:** an empty database is seeded and processed with no approval or outbox record; an interrupted first load is finished on the next visit; simultaneous first visitors with different clocks seed once and process each ticket once; non-demo data, reviews, and untouched NEW tickets are left alone; the hosted entrypoint lands on a 12-ticket queue with approval still locked; the local entrypoint does not auto-seed; and the shared config leaves the bind address to the host while the local launcher pins loopback.
+- **Hosted first load:** an empty database is seeded and processed with no approval or outbox record; an interrupted first load is finished on the next visit; simultaneous first visitors with different clocks seed once and process each ticket once; non-demo data, reviews, and untouched NEW tickets are left alone; the hosted entrypoint lands on a 12-ticket queue with approval still locked; its on-page guide names controls and tickets that exist and behave as it describes; the local entrypoint does not auto-seed; and the shared config leaves the bind address to the host while the local launcher pins loopback.
 - **Dashboard:** Streamlit AppTest clicks through seed, process, review, and approve, then checks that the metrics, queue columns, and deadline labels update correctly.
 
 ## Manual check

@@ -20,7 +20,7 @@ Tickets come in. Each one gets triaged (category, urgency, sentiment), routed to
 - **SLA handling that keeps context.** Resolution deadlines come from triaged urgency (critical 1h, high 4h, normal 24h, low 48h). The SLA sweep escalates breached tickets and keeps their original skill queue so the specialist knows where it came from.
 - **Metrics that don't inflate.** Every number on the dashboard is computed from stored records, and the formulas are on screen. Because a human approves every reply, it reports *AI-assisted resolutions* instead of claiming deflection.
 - **A real LLM path, opt-in.** Free demo mode uses transparent rules and extractive drafts, so it runs with no API key. Live mode calls any OpenAI-compatible chat-completions endpoint with structured JSON output, using only the standard library.
-- **42 tests**, covering SQLite transactions, approval races, SLA boundaries, provider contract failures, the hosted first-load path, and a full Streamlit click-through.
+- **43 tests**, covering SQLite transactions, approval races, SLA boundaries, provider contract failures, the hosted first-load path, and a full Streamlit click-through.
 
 ## See the workflow
 
@@ -74,7 +74,7 @@ All generated runtime data stays in the project's ignored `data/` folder. Tests 
 
 ### Hosted demo entrypoint
 
-`streamlit_app.py` is the entrypoint for Streamlit Community Cloud. It runs the same dashboard, but when the database is empty it loads and processes the demo tickets, so a visitor lands on a populated queue. It never approves anything: every reply still waits for a reviewer to confirm and approve it. The hosted copy is shared by all visitors and keeps its SQLite file on the host's temporary disk, so the data can be wiped when Community Cloud restarts or redeploys the app. Live LLM mode stays off there: no provider settings are configured, so it cannot call a model. Community Cloud enforces its own usage-statistics setting.
+`streamlit_app.py` is the entrypoint for Streamlit Community Cloud. It runs the same dashboard, but when the database is empty it loads and processes the demo tickets, so a visitor lands on a populated queue with a short "Try it in 60 seconds" guide. It never approves anything: every reply still waits for a reviewer to confirm and approve it. The hosted copy is shared by all visitors and keeps its SQLite file on the host's temporary disk, so the data can be wiped when Community Cloud restarts or redeploys the app. Live LLM mode stays off there: no provider settings are configured, so it cannot call a model. Community Cloud enforces its own usage-statistics setting.
 
 ## What is real, and what is simulated
 

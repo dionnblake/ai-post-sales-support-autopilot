@@ -9,6 +9,7 @@ from streamlit.testing.v1 import AppTest
 
 from conftest import NOW
 from support_autopilot import seed
+from support_autopilot.config import make_engine
 from support_autopilot.seed import SAMPLES, prepare_demo
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -87,12 +88,49 @@ def test_hosted_entrypoint_lands_on_a_populated_queue_with_approval_still_locked
     assert at.metric[0].value == "1"
 
 
+GUIDE_LABEL = "Try it in 60 seconds"
+GUIDE_REVIEWABLE = ["SYN-1001", "SYN-1002", "SYN-1005", "SYN-1009", "SYN-1010"]
+GUIDE_REFUSED = ["SYN-1006", "SYN-1007", "SYN-1012"]
+
+
+def test_hosted_page_opens_with_a_short_guide_whose_claims_hold(tmp_path, monkeypatch):
+    monkeypatch.setenv("SUPPORT_DATA_DIR", str(tmp_path / "guide"))
+    monkeypatch.setenv("SUPPORT_AUTO_SEED_DEMO", "0")
+    at = AppTest.from_file(ROOT / "streamlit_app.py", default_timeout=20).run()
+    assert not at.exception
+    guides = [expander for expander in at.expander if expander.label == GUIDE_LABEL]
+    assert len(guides) == 1
+    text = " ".join(block.value for block in guides[0].markdown)
+    # The guide names real controls, by labels that hold at any screen width...
+    assert "on the right" not in text
+    review_panel = next(header.value for header in at.subheader if header.value == "Review the reply")
+    assert review_panel in text
+    assert at.checkbox(key="review_confirm").label in text
+    assert at.button(key="approve").label in text
+    # ...and real tickets, which behave the way it says.
+    for external_id in GUIDE_REVIEWABLE + GUIDE_REFUSED:
+        assert external_id in text
+    tickets = {ticket["external_id"]: ticket for ticket in make_engine().tickets()}
+    assert at.selectbox(key="ticket_id").value == tickets["SYN-1001"]["id"]
+    assert all(tickets[external_id]["status"] == "NEEDS_REVIEW" for external_id in GUIDE_REVIEWABLE)
+    refusals = {"SYN-1006": ("Security", "Security"), "SYN-1007": ("Specialist", "knowledge-base evidence"),
+                "SYN-1012": ("Security", "untrusted-instruction")}
+    assert set(refusals) == set(GUIDE_REFUSED)
+    for external_id, (queue, reason) in refusals.items():
+        ticket = tickets[external_id]
+        assert (ticket["status"], ticket["queue"], ticket["draft"]) == ("ESCALATED", queue, None)
+        # The guide promises a yellow box explaining why a person took over.
+        at.selectbox(key="ticket_id").set_value(ticket["id"]).run()
+        assert any(reason in warning.value for warning in at.warning)
+
+
 def test_local_app_does_not_auto_seed(tmp_path, monkeypatch):
     monkeypatch.setenv("SUPPORT_DATA_DIR", str(tmp_path / "local"))
     monkeypatch.delenv("SUPPORT_AUTO_SEED_DEMO", raising=False)
     at = AppTest.from_file(ROOT / "app.py", default_timeout=15).run()
     assert not at.exception
     assert len(at.dataframe) == 0
+    assert not any(expander.label == GUIDE_LABEL for expander in at.expander)
 
 
 def test_shared_config_lets_the_host_choose_the_bind_address():

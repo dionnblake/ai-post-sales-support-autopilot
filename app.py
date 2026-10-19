@@ -76,6 +76,19 @@ st.title("Support Autopilot")
 st.write("The repetitive work moves forward. You decide what goes out.")
 st.info("SYNTHETIC DEMO · Replies go to a local simulated outbox. No email, ClickUp connection, or autonomous sends.")
 if hosted:
+    with st.expander("Try it in 60 seconds", expanded=True):
+        st.markdown(
+            "You're a support agent at TaskHarbor, a made-up software company. The AI has already sorted "
+            "12 customer emails and drafted replies. **You decide what goes out.**\n\n"
+            "1. Below the queue, **SYN-1001 / Download invoice** is open. Read the AI's draft under "
+            "**Review the reply**, then expand the source it cites and check that they match.\n"
+            "2. Tick **I reviewed the reply and its sources**, then click **Approve & simulate reply**. "
+            "The scoreboard updates. Nothing is really sent.\n"
+            "3. Open a ticket the AI refused to answer: **SYN-1012** (someone tries to hijack the AI), "
+            "**SYN-1006** (a security report), or **SYN-1007** (a question no help article covers). "
+            "The yellow box says why it went to a person instead.\n\n"
+            "If an earlier visitor already approved SYN-1001, try **SYN-1002**, **SYN-1005**, **SYN-1009**, "
+            "or **SYN-1010**.")
     st.caption("Shared public demo: the queue was processed for you, but every reply still waits for your approval. "
                "Other visitors' decisions appear here too, and the data can be wiped when the host restarts the app.")
 if notice := st.session_state.pop("notice", None):

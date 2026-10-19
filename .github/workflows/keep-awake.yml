@@ -22,25 +22,35 @@ jobs:
           DEMO_URL: https://support-autopilot-demo.streamlit.app/
         run: |
           python - <<'EOF'
-          import os, re
+          import os, re, sys, time
           from playwright.sync_api import sync_playwright
+
+          def page_text(page):
+              texts = []
+              for frame in page.frames:
+                  try:
+                      texts.append(frame.inner_text("body", timeout=2_000))
+                  except Exception:
+                      pass
+              return " ".join(texts)
+
           with sync_playwright() as p:
               page = p.chromium.launch().new_page()
               page.goto(os.environ["DEMO_URL"], wait_until="domcontentloaded", timeout=120_000)
-              page.wait_for_timeout(15_000)
+              page.wait_for_timeout(10_000)
               wake = page.get_by_role("button", name=re.compile("get this app back up", re.I))
               if wake.count():
                   print("App was asleep; waking it.")
                   wake.first.click()
-                  page.wait_for_timeout(90_000)
+              deadline = time.time() + 180
+              while time.time() < deadline:
+                  text = page_text(page)
+                  if "has encountered an error" in text:
+                      sys.exit("The live demo is showing an error page. Reboot it from Manage app on Streamlit.")
+                  if "Ticket queue" in text:
+                      print("Dashboard rendered.")
+                      break
+                  page.wait_for_timeout(5_000)
               else:
-                  print("App was awake.")
-              # The dashboard renders inside Streamlit's app frame.
-              def shows_dashboard(frame):
-                  try:
-                      return "Support Autopilot" in frame.content()
-                  except Exception:
-                      return False
-              rendered = any(shows_dashboard(frame) for frame in page.frames)
-              print("Dashboard rendered." if rendered else "Dashboard text not found yet; the visit still counts.")
+                  sys.exit("The live demo did not render within 3 minutes.")
           EOF
